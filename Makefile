@@ -66,7 +66,7 @@ endif
 # Install Oh My Zsh
 .omz_install:
 	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing Oh My Zsh $(ECHO_RESET_COLOR)"
-	sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+	curl -L https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh
 
 # Install the Honukai theme
 .honukai: .omz_install
