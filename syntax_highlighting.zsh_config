@@ -1,0 +1,6 @@
+# Syntax Highlighting
+source ~/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# Persistent rehash: This allows compinit to automatically find new executables in the $PATH.
+zstyle ':completion:*' rehash true
+
