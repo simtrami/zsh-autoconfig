@@ -7,15 +7,16 @@ ECHO_PREFIX_ERROR=\b\b\b\033[1;31;40mERROR:
 ECHO_RESET_COLOR=\033[0;0m
 # UI messages
 ERROR_DEPENDENCY_MISSING=missing, run 'make install_dependencies' before retrying
-INFO_DISTRO_DETECTED=based distro detected!
+INFO_PM_DETECTED=package manager detected!
 # Detect distro
+FEDORA:=$(shell cat /etc/os-release | grep -E "Fedora" | wc -l)
 CENTOS:=$(shell cat /etc/os-release | grep -E "CentOS" | wc -l)
 DEBIAN:=$(shell cat /etc/os-release | grep -E "debian" | wc -l)
 ARCH:=$(shell cat /etc/os-release | grep -E "arch" | wc -l)
 # Set the permission elevation binary
 DOAS=sudo
 
-.PHONY: check_dependencies .check_git .check_curl .check_zsh install_dependencies .apt_install_dependencies .yum_install_dependencies .pacman_install_dependencies
+.PHONY: check_dependencies .check_git .check_curl .check_zsh install_dependencies .apt_install_dependencies .dnf_install_dependencies .pacman_install_dependencies
 
 autoconfig: check_dependencies .chsh
 
@@ -29,23 +30,25 @@ check_dependencies: .check_git .check_curl .check_zsh
 # Install the dependencies using your distro's package manager
 ifneq ($(DEBIAN),0)
 install_dependencies: .apt_install_dependencies
+else ifneq ($(FEDORA),0)
+install_dependencies: .dnf_install_dependencies
 else ifneq ($(CENTOS),0)
-install_dependencies: .yum_install_dependencies
+install_dependencies: .dnf_install_dependencies
 else ifneq ($(ARCH),0)
 install_dependencies: .pacman_install_dependencies
 else
-install_dependencies: ; $(error Unrecognised GNU/Linux distro. This tool only supports Debian, CentOS and ArchLinux based distros)
+install_dependencies: ; $(error Unrecognised GNU/Linux distro. This tool only supports Debian, Ubuntu, CentOS, Fedora and ArchLinux based distros)
 endif
 
 ## Installation targets
 .apt_install_dependencies:
-	@echo -e "$(ECHO_PREFIX_INFO) Debian $(INFO_DISTRO_DETECTED) $(ECHO_RESET_COLOR)"
+	@echo -e "$(ECHO_PREFIX_INFO) APT $(INFO_PM_DETECTED) $(ECHO_RESET_COLOR)"
 	$(DOAS) apt-get install -y zsh curl git
-.yum_install_dependencies:
-	@echo -e "$(ECHO_PREFIX_INFO) CentOS $(INFO_DISTRO_DETECTED) $(ECHO_RESET_COLOR)"
-	$(DOAS) yum install -y zsh curl git
+.dnf_install_dependencies:
+	@echo -e "$(ECHO_PREFIX_INFO) DNF $(INFO_PM_DETECTED) $(ECHO_RESET_COLOR)"
+	$(DOAS) dnf install -y zsh curl git
 .pacman_install_dependencies:
-	@echo -e "$(ECHO_PREFIX_INFO) ArchLinux $(INFO_DISTRO_DETECTED) $(ECHO_RESET_COLOR)"
+	@echo -e "$(ECHO_PREFIX_INFO) Pacman $(INFO_PM_DETECTED) $(ECHO_RESET_COLOR)"
 	$(DOAS) pacman -S --noconfirm zsh curl git
 
 # Check dependencies installation
