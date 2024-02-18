@@ -27,6 +27,17 @@ autoconfig: check_dependencies .chsh
 # Makes sure the dependencies are installed
 check_dependencies: .check_git .check_curl .check_zsh
 
+# Check dependencies installation
+.check_git:
+	@echo -n -e "$(ECHO_PREFIX_INFO) Looking for a git executable... $(ECHO_RESET_COLOR)"
+	@which git 2> /dev/null || (echo -e "$(ECHO_PREFIX_ERROR) git $(ERROR_DEPENDENCY_MISSING) $(ECHO_RESET_COLOR)" ; exit 1)
+.check_curl:
+	@echo -n -e "$(ECHO_PREFIX_INFO) Looking for a curl executable... $(ECHO_RESET_COLOR)"
+	@which curl 2> /dev/null || (echo -e "$(ECHO_PREFIX_ERROR) curl $(ERROR_DEPENDENCY_MISSING) $(ECHO_RESET_COLOR)" ; exit 1)
+.check_zsh:
+	@echo -n -e "$(ECHO_PREFIX_INFO) Looking for a zsh executable... $(ECHO_RESET_COLOR)"
+	@which zsh 2> /dev/null || (echo -e "$(ECHO_PREFIX_ERROR) zsh $(ERROR_DEPENDENCY_MISSING) $(ECHO_RESET_COLOR)" ; exit 1)
+
 # Install the dependencies using your distro's package manager
 ifneq ($(DEBIAN),0)
 install_dependencies: .apt_install_dependencies
@@ -43,24 +54,13 @@ endif
 ## Installation targets
 .apt_install_dependencies:
 	@echo -e "$(ECHO_PREFIX_INFO) APT $(INFO_PM_DETECTED) $(ECHO_RESET_COLOR)"
-	$(DOAS) apt-get install -y zsh curl git
+	$(DOAS) apt install -y zsh curl git
 .dnf_install_dependencies:
 	@echo -e "$(ECHO_PREFIX_INFO) DNF $(INFO_PM_DETECTED) $(ECHO_RESET_COLOR)"
 	$(DOAS) dnf install -y zsh curl git
 .pacman_install_dependencies:
 	@echo -e "$(ECHO_PREFIX_INFO) Pacman $(INFO_PM_DETECTED) $(ECHO_RESET_COLOR)"
 	$(DOAS) pacman -S --noconfirm zsh curl git
-
-# Check dependencies installation
-.check_git:
-	@echo -n -e "$(ECHO_PREFIX_INFO) Looking for a git executable... $(ECHO_RESET_COLOR)"
-	@which git 2> /dev/null || (echo -e "$(ECHO_PREFIX_ERROR) git $(ERROR_DEPENDENCY_MISSING) $(ECHO_RESET_COLOR)" ; exit 1)
-.check_curl:
-	@echo -n -e "$(ECHO_PREFIX_INFO) Looking for a curl executable... $(ECHO_RESET_COLOR)"
-	@which curl 2> /dev/null || (echo -e "$(ECHO_PREFIX_ERROR) curl $(ERROR_DEPENDENCY_MISSING) $(ECHO_RESET_COLOR)" ; exit 1)
-.check_zsh:
-	@echo -n -e "$(ECHO_PREFIX_INFO) Looking for a zsh executable... $(ECHO_RESET_COLOR)"
-	@which zsh 2> /dev/null || (echo -e "$(ECHO_PREFIX_ERROR) zsh $(ERROR_DEPENDENCY_MISSING) $(ECHO_RESET_COLOR)" ; exit 1)
 
 ###
 # ZSH CONFIGURATION
@@ -75,27 +75,35 @@ endif
 .honukai: .omz_install
 	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing the Honukai theme $(ECHO_RESET_COLOR)"
 	curl -o ~/.oh-my-zsh/themes/honukai.zsh-theme https://raw.githubusercontent.com/oskarkrawczyk/honukai-iterm-zsh/master/honukai.zsh-theme
-	sed -i "s/ZSH_THEME=\"robbyrussell\"/ZSH_THEME=\"honukai\"/g" ~/.zshrc
+	sed -i 's/^ZSH_THEME=.*/ZSH_THEME=\"honukai\"/g' ~/.zshrc
 
 # Load VCS helpers
 .vcs_helpers: .omz_install
 	@echo -e "$(ECHO_PREFIX_INFO) Enabling VCS helpers in Zsh $(ECHO_RESET_COLOR)"
 	cat vcs_helpers.zsh_config | tee -a ~/.zshrc
 
-# Install the syntax highlighting plugin
+# Install the completions plugin
+.completions: .omz_install
+	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing the completions plugin $(ECHO_RESET_COLOR)"
+	git clone https://github.com/zsh-users/zsh-completions.git ~/.oh-my-zsh/custom/plugins/zsh-completions
+	sed -i '/^source \$ZSH\/oh-my-zsh\.sh$/i fpath+=\${ZSH_CUSTOM:-\${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src' ~/.zshrc
+	cat completions.zsh_config | tee -a ~/.zshrc
+
+# Install the autosuggestions plugin
+.autosuggestions: .omz_install
+	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing the autosuggestions plugin $(ECHO_RESET_COLOR)"
+	git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+	omz plugin enable zsh-autosuggestions
+	cat autosuggestions.zsh_config | tee -a ~/.zshrc
+
+# Install the syntax highlighting plugin (must be run last before .chsh)
 .syntax_highlighting: .omz_install
 	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing the syntax highlighting plugin $(ECHO_RESET_COLOR)"
 	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/plugins/zsh-syntax-highlighting
 	cat syntax_highlighting.zsh_config | tee -a ~/.zshrc
 
-# Install the completions plugin
-.completions: .omz_install
-	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing the completions plugin $(ECHO_RESET_COLOR)"
-	git clone https://github.com/zsh-users/zsh-completions.git ~/.oh-my-zsh/custom/plugins/zsh-completions
-	cat completions.zsh_config | tee -a ~/.zshrc
-
 # Change the default shell to zsh
-.chsh: .honukai .vcs_helpers .syntax_highlighting .completions
+.chsh: .honukai .vcs_helpers .completions .autosuggestions .syntax_highlighting
 	@echo -e "$(ECHO_PREFIX_INFO) Changing the default shell to Zsh $(ECHO_RESET_COLOR)"
 	chsh -s $(shell which zsh)
 	@echo -e "$(ECHO_PREFIX_INFO) Installation complete! $(ECHO_RESET_COLOR)"

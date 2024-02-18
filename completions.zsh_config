@@ -1,4 +1,4 @@
 # Zsh Completions
-plugins+=(zsh-completions)
-autoload -U compinit && compinit
+# Installed by adding it to FPATH via the line before `source $ZSH/oh-my-zsh.sh` (above)
+# See: https://github.com/zsh-users/zsh-completions?tab=readme-ov-file#oh-my-zsh
 
