@@ -18,7 +18,7 @@ DOAS=sudo
 
 .PHONY: check_dependencies .check_git .check_curl .check_zsh install_dependencies .apt_install_dependencies .dnf_install_dependencies .pacman_install_dependencies
 
-autoconfig: check_dependencies .chsh
+autoconfig: check_dependencies .omz_install .chsh
 
 ###
 # DEPENDENCIES
@@ -68,39 +68,86 @@ endif
 
 # Install Oh My Zsh
 .omz_install:
-	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing Oh My Zsh $(ECHO_RESET_COLOR)"
+	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing Oh My Zsh... $(ECHO_RESET_COLOR)"
+ifeq "$(wildcard ~/.oh-my-zsh/*)" ""
 	curl -L https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh
+	@echo -e "$(ECHO_PREFIX_INFO) Done. $(ECHO_RESET_COLOR)"
+else
+	@echo -e "$(ECHO_PREFIX_INFO) Oh My Zsh already installed, continue. $(ECHO_RESET_COLOR)"
+endif
 
 # Install the Honukai theme
-.honukai: .omz_install
+.honukai:
 	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing the Honukai theme $(ECHO_RESET_COLOR)"
+ifeq "$(wildcard ~/.oh-my-zsh/themes/honukai.zsh-theme)" ""
 	curl -o ~/.oh-my-zsh/themes/honukai.zsh-theme https://raw.githubusercontent.com/oskarkrawczyk/honukai-iterm-zsh/master/honukai.zsh-theme
+else
+	@echo -e "$(ECHO_PREFIX_INFO) Honukai theme already downloaded, continue. $(ECHO_RESET_COLOR)"
+endif
+
+ifeq ($(grep -c ZSH_THEME="honukai" ~/.zshrc),0)
 	sed -i 's/^ZSH_THEME=.*/ZSH_THEME=\"honukai\"/g' ~/.zshrc
+	@echo -e "$(ECHO_PREFIX_INFO) Done. $(ECHO_RESET_COLOR)"
+else
+	@echo -e "$(ECHO_PREFIX_INFO) Honukai theme already installed, continue. $(ECHO_RESET_COLOR)"
+endif
 
 # Load VCS helpers
-.vcs_helpers: .omz_install
+.vcs_helpers:
 	@echo -e "$(ECHO_PREFIX_INFO) Enabling VCS helpers in Zsh $(ECHO_RESET_COLOR)"
+ifeq ($(grep -c "run-help" ~/.zshrc),0)
 	cat vcs_helpers.zsh_config | tee -a ~/.zshrc
+	@echo -e "$(ECHO_PREFIX_INFO) Done. $(ECHO_RESET_COLOR)"
+else
+	@echo -e "$(ECHO_PREFIX_INFO) VCS already enabled, continue.. $(ECHO_RESET_COLOR)"
+endif
 
 # Install the completions plugin
-.completions: .omz_install
+.completions:
 	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing the completions plugin $(ECHO_RESET_COLOR)"
+ifeq "$(wildcard ~/.oh-my-zsh/custom/plugins/zsh-completions/*)" ""
 	git clone https://github.com/zsh-users/zsh-completions.git ~/.oh-my-zsh/custom/plugins/zsh-completions
-	sed -i '/^source \$ZSH\/oh-my-zsh\.sh$/i fpath+=\${ZSH_CUSTOM:-\${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src' ~/.zshrc
+else
+	@echo -e "$(ECHO_PREFIX_INFO) Plugin already downloaded, continue. $(ECHO_RESET_COLOR)"
+endif
+ifeq ($(grep -c "plugins/zsh-completions/src" ~/.zshrc),0)
+	sed -i '/^source \$ZSH\/oh-my-zsh\.sh/i fpath+=\${ZSH_CUSTOM:-\${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src' ~/.zshrc
+else
+	@echo -e "$(ECHO_PREFIX_INFO) Plugin already installed, continue. $(ECHO_RESET_COLOR)"
+endif
+ifeq ($(grep -c "# Zsh Completions" ~/.zshrc),0)
 	cat completions.zsh_config | tee -a ~/.zshrc
+	@echo -e "$(ECHO_PREFIX_INFO) Done. $(ECHO_RESET_COLOR)"
+endif
 
 # Install the autosuggestions plugin
-.autosuggestions: .omz_install
+.autosuggestions:
 	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing the autosuggestions plugin $(ECHO_RESET_COLOR)"
+ifeq "$(wildcard ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions/*)" ""
 	git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-	omz plugin enable zsh-autosuggestions
+else
+	@echo -e "$(ECHO_PREFIX_INFO) Plugin already downloaded, continue. $(ECHO_RESET_COLOR)"
+endif
+	zsh -ic "omz plugin enable zsh-autosuggestions || exit 0"
+ifeq ($(grep -c "# Zsh Autosuggestions" ~/.zshrc),0)
 	cat autosuggestions.zsh_config | tee -a ~/.zshrc
+	@echo -e "$(ECHO_PREFIX_INFO) Done. $(ECHO_RESET_COLOR)"
+endif
 
 # Install the syntax highlighting plugin (must be run last before .chsh)
-.syntax_highlighting: .omz_install
+.syntax_highlighting:
 	@echo -e "$(ECHO_PREFIX_INFO) Downloading and installing the syntax highlighting plugin $(ECHO_RESET_COLOR)"
+ifeq "$(wildcard ~/.oh-my-zsh/plugins/zsh-syntax-highlighting/*)" ""
 	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/plugins/zsh-syntax-highlighting
+else
+	@echo -e "$(ECHO_PREFIX_INFO) Plugin already downloaded, continue. $(ECHO_RESET_COLOR)"
+endif
+ifeq ($(grep -c "source ~/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ~/.zshrc),0)
 	cat syntax_highlighting.zsh_config | tee -a ~/.zshrc
+	@echo -e "$(ECHO_PREFIX_INFO) Done. $(ECHO_RESET_COLOR)"
+else
+	@echo -e "$(ECHO_PREFIX_INFO) Plugin already installed, continue. $(ECHO_RESET_COLOR)"
+endif
 
 # Change the default shell to zsh
 .chsh: .honukai .vcs_helpers .completions .autosuggestions .syntax_highlighting
