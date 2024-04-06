@@ -85,7 +85,7 @@ else
 	@echo -e "$(ECHO_PREFIX_INFO) Honukai theme already downloaded, continue. $(ECHO_RESET_COLOR)"
 endif
 
-ifeq ($(grep -c ZSH_THEME="honukai" ~/.zshrc),0)
+ifneq "$(shell grep -L honukai ~/.zshrc)" ""
 	sed -i 's/^ZSH_THEME=.*/ZSH_THEME=\"honukai\"/g' ~/.zshrc
 	@echo -e "$(ECHO_PREFIX_INFO) Done. $(ECHO_RESET_COLOR)"
 else
@@ -95,7 +95,7 @@ endif
 # Load VCS helpers
 .vcs_helpers:
 	@echo -e "$(ECHO_PREFIX_INFO) Enabling VCS helpers in Zsh $(ECHO_RESET_COLOR)"
-ifeq ($(grep -c "run-help" ~/.zshrc),0)
+ifneq "$(shell grep -L run-help ~/.zshrc)" ""
 	cat vcs_helpers.zsh_config | tee -a ~/.zshrc
 	@echo -e "$(ECHO_PREFIX_INFO) Done. $(ECHO_RESET_COLOR)"
 else
@@ -110,14 +110,16 @@ ifeq "$(wildcard ~/.oh-my-zsh/custom/plugins/zsh-completions/*)" ""
 else
 	@echo -e "$(ECHO_PREFIX_INFO) Plugin already downloaded, continue. $(ECHO_RESET_COLOR)"
 endif
-ifeq ($(grep -c "plugins/zsh-completions/src" ~/.zshrc),0)
-	sed -i '/^source \$ZSH\/oh-my-zsh\.sh/i fpath+=\${ZSH_CUSTOM:-\${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src' ~/.zshrc
+ifneq "$(shell grep -L 'plugins/zsh-completions/src' ~/.zshrc)" ""
+	sed -i '/^source \$$ZSH\/oh-my-zsh\.sh/i fpath+=\$${ZSH_CUSTOM:-\$${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src' ~/.zshrc
 else
-	@echo -e "$(ECHO_PREFIX_INFO) Plugin already installed, continue. $(ECHO_RESET_COLOR)"
+	@echo -e "$(ECHO_PREFIX_INFO) ... $(ECHO_RESET_COLOR)"
 endif
-ifeq ($(grep -c "# Zsh Completions" ~/.zshrc),0)
+ifneq "$(shell grep -L '# Zsh Completions' ~/.zshrc)" ""
 	cat completions.zsh_config | tee -a ~/.zshrc
 	@echo -e "$(ECHO_PREFIX_INFO) Done. $(ECHO_RESET_COLOR)"
+else
+	@echo -e "$(ECHO_PREFIX_INFO) Plugin already installed, continue. $(ECHO_RESET_COLOR)"
 endif
 
 # Install the autosuggestions plugin
@@ -128,10 +130,16 @@ ifeq "$(wildcard ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions/*)" ""
 else
 	@echo -e "$(ECHO_PREFIX_INFO) Plugin already downloaded, continue. $(ECHO_RESET_COLOR)"
 endif
-	zsh -ic "omz plugin enable zsh-autosuggestions || exit 0"
-ifeq ($(grep -c "# Zsh Autosuggestions" ~/.zshrc),0)
+ifneq "$(shell grep -L 'plugins=(git zsh-autosuggestions)' ~/.zshrc)" ""
+	/bin/zsh -ic "omz plugin enable zsh-autosuggestions && exit 0"
+else
+	@echo -e "$(ECHO_PREFIX_INFO) Plugin already enabled, continue. $(ECHO_RESET_COLOR)"
+endif
+ifneq "$(shell grep -L '# Zsh Autosuggestions' ~/.zshrc)" ""
 	cat autosuggestions.zsh_config | tee -a ~/.zshrc
 	@echo -e "$(ECHO_PREFIX_INFO) Done. $(ECHO_RESET_COLOR)"
+else
+	@echo -e "$(ECHO_PREFIX_INFO) Plugin already installed, continue. $(ECHO_RESET_COLOR)"
 endif
 
 # Install the syntax highlighting plugin (must be run last before .chsh)
@@ -142,7 +150,7 @@ ifeq "$(wildcard ~/.oh-my-zsh/plugins/zsh-syntax-highlighting/*)" ""
 else
 	@echo -e "$(ECHO_PREFIX_INFO) Plugin already downloaded, continue. $(ECHO_RESET_COLOR)"
 endif
-ifeq ($(grep -c "source ~/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ~/.zshrc),0)
+ifneq "$(shell grep -L 'source ~/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh' ~/.zshrc)" ""
 	cat syntax_highlighting.zsh_config | tee -a ~/.zshrc
 	@echo -e "$(ECHO_PREFIX_INFO) Done. $(ECHO_RESET_COLOR)"
 else
