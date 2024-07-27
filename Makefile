@@ -131,7 +131,7 @@ else
 	@echo -e "$(ECHO_PREFIX_INFO) Plugin already downloaded, continue. $(ECHO_RESET_COLOR)"
 endif
 ifneq "$(shell grep -L 'plugins=(git zsh-autosuggestions)' ~/.zshrc)" ""
-	/bin/zsh -ic "omz plugin enable zsh-autosuggestions && exit 0"
+	/bin/zsh -ic "omz plugin enable zsh-autosuggestions && exit 0" &
 else
 	@echo -e "$(ECHO_PREFIX_INFO) Plugin already enabled, continue. $(ECHO_RESET_COLOR)"
 endif
